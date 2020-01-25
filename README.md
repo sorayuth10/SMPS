@@ -1,6 +1,6 @@
 # Smart Parking System Project
 
-### Year 4 - Information Engineering Project. ###
+### Year 4 - Bachelor's Degree in Information Engineering ###
 
 
 ![SMPS](system.jpg)
