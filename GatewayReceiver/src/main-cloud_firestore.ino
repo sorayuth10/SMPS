@@ -3,10 +3,9 @@
 #include "LoRa.h"
 #include "SSD1306.h"
 #include <WiFi.h>
-#include <FirebaseESP32.h>
-#include "esp_wpa2.h"
-//#include "ArduinoJson.h"
-//#include "HTTPClient.h"
+#include "esp_wpa2.h" //wifi_login
+#include "ArduinoJson.h"
+#include "HTTPClient.h"
 
 //Define variable
 #define SCK 5   // GPIO5 - SX1278's SCK
@@ -17,15 +16,10 @@
 #define DI0 26  // GPIO26 - SX1278's IRQ (interrupt request)
 #define BAND 915E6
 #define HR_TO_RESET 12
-#define FIREBASE_HOST "smartparking-eee98.firebaseio.com" //Do not include "https://" in FIREBASE_HOST
-#define FIREBASE_AUTH "ZKYd8Ifebx1VSXZTMMuASkkcaW7zhfCNZihkworC"
 #define EAP_ANONYMOUS_IDENTITY ""
 #define EAP_IDENTITY "59011361"
-#define EAP_PASSWORD "4f73616c7974753535" //HEX
-//Define FirebaseESP32 data object
+#define EAP_PASSWORD "xxxxxxxx"
 
-FirebaseData firebaseData;
-String path = "/ESP32";
 const char* ssid = "@KMITL";
 int counter = 0;
 
@@ -55,13 +49,15 @@ void sendData(){
   jsonDoc["name"] =  "Node "+ String(node_id,DEC);
   jsonDoc["Sensor"] = SENSOR;
   serializeJsonPretty(jsonDoc, Serial);
+  char buffer[20];
 
   HTTPClient http; //Declare object of class HTTPClient
   String postData;
-  http.begin(lapssEndpoint); //Specify request destination
+  http.begin("https://firestore.googleapis.com/v1beta1/projects/smartparking-eee98/databases/(default)/documents/Sensor/001"); //Specify request destination
   // http.setTimeout(5);
-  serializeJson(jsonDoc,postData);
   http.addHeader("Content-Type", "application/json");
+  serializeJson(jsonDoc,postData);
+  http.PATCH(buffer);
   Serial.println(postData);
 
   int httpCode =   http.POST(postData);
@@ -76,42 +72,10 @@ void sendData(){
   {
     showDebugMessage("Send Failed Error code :"+ String(httpCode,DEC));
     delay(500);
-    ESP.restart();    // Reset the MCU if the connection failed.
+//    ESP.restart();    // Reset the MCU if the connection failed.
   }
 
   http.end(); //Close connection
-
-
-  //EMON CMS
-
-
-  postData = "node=LAPSSNode&json={temperature:" + String(temperature, 1) + ",humidity:" + String(humidity, 1) + ",PM25:" + String(PM25,DEC) + "}&apikey=" + emonAPIKey;
-  http.begin("http://emoncms.org/input/post?" + postData); //Specify request destination
-
-  httpCode = http.GET();         //Send the request
-  String payload = http.getString(); //Get the response payload
-
-  // Serial.println(httpCode); //Print HTTP return code
-  // Serial.println(postData);  //Print request response payload
-
-  if (httpCode == 200)
-  {
-    showDebugMessage("EMON Send OK");
-    delay(500);
-  }
-  else
-  {
-    showDebugMessage("EMON Send Failed Error code :"+ String(httpCode,DEC));
-    delay(500);
-  }
-
-  http.end(); //Close connection
-
-}
-
-//When WiFi Manager enters config mode (Failed to connect to wifi)
-void setConfigModeCallback(WiFiManager *myWiFiManager){
-  showDebugMessage("Enter Wifi setup mode : " + myWiFiManager->getConfigPortalSSID());
 }
 
 void displayData () {
@@ -121,20 +85,19 @@ void displayData () {
   display.drawString (0, 0, rssi);
 
   display.setFont(ArialMT_Plain_16);
-  display.drawString (0, 25, String(temperature,1)+"°c  " + String(humidity,1) + "%\n" + "PM25: "+ PM25 +" ug/cm3");
+  display.drawString (0, 25, "SENSOR:" + String(SENSOR));
 
   int lastUpdateSec = (millis() - lastUpdate) /1000;
 
   display.setTextAlignment (TEXT_ALIGN_RIGHT);
   display.setFont (ArialMT_Plain_10);
   
-  display.drawString (127, 0, "By node " + String( node_id));
+  display.drawString (127, 0, "By node " + String(node_id));
   display.drawString (127, 12, String(lastUpdateSec) +"s ago");
 
 
   display.display ();
 }
-
 
 void onReceive(int packetSize){
    // received a packet
@@ -214,23 +177,12 @@ void setup()
   Serial.print("Connected with IP: ");
   Serial.println(WiFi.localIP());
   Serial.println();
-
-  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
-  Firebase.reconnectWiFi(true);
-
-  //Set database read timeout to 1 minute (max 15 minutes)
-  Firebase.setReadTimeout(firebaseData, 1000 * 60);
-  //tiny, small, medium, large and unlimited.
-  //Size and its write timeout e.g. tiny (1s), small (10s), medium (30s) and large (60s).
-  Firebase.setwriteSizeLimit(firebaseData, "tiny");
-  delay (1500);
 }
 
 void loop(){
   int packetSize = LoRa.parsePacket();
   if (packetSize) {
    onReceive(packetSize);
-   Firebase.setInt(firebaseData, path + "/Val", analogRead(SENSOR_PIN)); //send to firebase
   }
   delay(100);
   displayData();

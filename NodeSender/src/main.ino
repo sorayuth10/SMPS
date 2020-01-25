@@ -1,11 +1,6 @@
 #include <Arduino.h>
 #include <LoRa.h>
 #include "SMPSNode.h"
-//#include "DHT.h"
-//#include "PMS.h"
-//#include "WiFiManager.h"
-//#include "ArduinoJson.h"
-//#include "HTTPClient.h"
 
 //Define variable
 #define SCK 5   // GPIO5 - SX1278's SCK
