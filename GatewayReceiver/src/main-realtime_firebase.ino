@@ -15,10 +15,10 @@
 #define DI0 26  // GPIO26 - SX1278's IRQ (interrupt request)
 #define BAND 915E6
 #define HR_TO_RESET 12
-#define FIREBASE_HOST "smartparking-eee98.firebaseio.com" //Do not include "https://" in FIREBASE_HOST
-#define FIREBASE_AUTH "ZKYd8Ifebx1VSXZTMMuASkkcaW7zhfCNZihkworC"
+#define FIREBASE_HOST "xxxxx.firebaseio.com" //Do not include "https://" in FIREBASE_HOST
+#define FIREBASE_AUTH "xxxxxxxx"
 #define EAP_ANONYMOUS_IDENTITY ""
-#define EAP_IDENTITY "59011361"
+#define EAP_IDENTITY "xxxxxxxxx"
 #define EAP_PASSWORD "xxxxxxxx"
 
 //Define FirebaseESP32 data object
@@ -48,7 +48,7 @@ void showDebugMessage(String text){
 }
 
 void sendData(){
-  Firebase.setInt(firebaseData, path + "/Parking-" + String(node_id)/sensor, SENSOR); //send to firebase
+  Firebase.setInt(firebaseData, path + "/Node-" + node_id +"/Sensor", SENSOR); //send to firebase
 }
 
 void displayData () {
@@ -98,6 +98,11 @@ void onReceive(int packetSize){
   Serial.printf("\tSensor: %d\n",gateway.data.SENSOR);
   
   node_id = gateway.data.ID;
+  node_id = String(node_id);
+  while (node_id.length() < 3) {
+    node_id = '0' + node_id;
+  }
+  
   SENSOR  = gateway.data.SENSOR;
   lastUpdate = millis();
   displayData();
