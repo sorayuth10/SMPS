@@ -48,7 +48,7 @@ void showDebugMessage(String text){
 }
 
 void sendData(){
-  Firebase.setInt(firebaseData, path + "/Node-" + node_id +"/Sensor", SENSOR); //send to firebase
+  Firebase.setInt(firebaseData, path + "/Node_" + node_id +"/Sensor", SENSOR); //send to firebase
 }
 
 void displayData () {
